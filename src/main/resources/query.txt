@@ -1,0 +1,36 @@
+CREATE TABLE IF NOT EXISTS usuarios (
+                                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                        codigo TEXT UNIQUE,
+                                        nombre_completo TEXT NOT NULL,
+                                        rol TEXT CHECK (rol IN ('SU', 'AD', 'CJ')) NOT NULL,
+                                        clave_acceso TEXT NOT NULL,
+                                        activo INTEGER DEFAULT 1
+);
+CREATE TRIGGER IF NOT EXISTS generar_codigo_usuario
+    AFTER INSERT ON usuarios
+    FOR EACH ROW
+BEGIN
+    UPDATE usuarios
+    SET codigo =
+            CASE NEW.rol
+                WHEN 'SU' THEN 'SU' || printf('%04d', (SELECT COUNT(*) FROM usuarios WHERE rol = 'SU'))
+                WHEN 'AD' THEN 'AD' || printf('%04d', (SELECT COUNT(*) FROM usuarios WHERE rol = 'AD'))
+                WHEN 'CJ' THEN 'CJ' || printf('%04d', (SELECT COUNT(*) FROM usuarios WHERE rol = 'CJ'))
+                END
+    WHERE id = NEW.id;
+END;
+
+
+
+
+--puebas
+INSERT INTO usuarios (nombre_completo, rol, clave_acceso)
+VALUES ('Juan Pérez', 'AD', 'admin123');
+
+INSERT INTO usuarios (nombre_completo, rol, clave_acceso)
+VALUES ('Tech Master', 'SU', 'root123'),
+       ('Ana Dueña',   'AD', 'admin123'),
+       ('Carlos Caj',  'CJ', 'cajero123');
+
+DELETE FROM usuarios WHERE id = 1;
+SELECT * FROM usuarios;
